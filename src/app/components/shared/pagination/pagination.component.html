@@ -1,0 +1,11 @@
+<div class="flex justify-content-between">
+    <div class="input-icon-wrap blue">
+        <span class="input-icon"><span class="fa fa-solid fa-angle-left"></span></span>
+        <button [disabled]="disabled" type="button" class="input-with-icon" (click)="back()">Atras</button>
+    </div>
+
+    <div class="input-icon-wrap blue">
+        <button [disabled]="disabled" type="button" (click)="next()">Siguiente</button>
+        <span class="input-icon"><span class="fa fa-solid fa-angle-right"></span></span>
+    </div>
+</div>
