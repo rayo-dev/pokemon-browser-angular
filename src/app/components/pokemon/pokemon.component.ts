@@ -1,5 +1,6 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Subscription } from 'rxjs';
+import { PagingResource } from '../..//libs/entities/common/paging-resource';
 import { Move, Pokemon, PokemonType } from '../../libs/entities/pokemon';
 import { PokemonService } from '../../libs/services/pokemon.service';
 
@@ -13,13 +14,15 @@ export class PokemonComponent implements OnInit, OnDestroy {
   pokemonList?: Pokemon[];
   pokemonSelected?: Pokemon;
   searchValue: string = '';
+
   loadingData: boolean = false;
 
-  initialPage: number = 1;
+  static readonly INITIAL_PAGE: number = 1;
+  static readonly PAGE_SIZE: number = 10;
 
-  pokemonGetAllSuscription: Subscription | undefined;
-  pokemonSuscription: Subscription | undefined;
-  pokemonSpriteSuscription: Subscription | undefined;
+  pagingResource: PagingResource = { page_number: PokemonComponent.INITIAL_PAGE, page_size: PokemonComponent.PAGE_SIZE };
+
+  private subscriptions: Subscription[] = [];
 
   constructor(private pokemonservice: PokemonService) { }
 
@@ -27,56 +30,47 @@ export class PokemonComponent implements OnInit, OnDestroy {
     this.searchAll();
   }
 
-  ngOnDestroy(): void {
-    this.pokemonGetAllSuscription?.unsubscribe();
-    this.pokemonSuscription?.unsubscribe();
-    this.pokemonSpriteSuscription?.unsubscribe();
+  ngOnDestroy() {
+    this.subscriptions.forEach(subscription => subscription.unsubscribe());
   }
 
   onKeyUpSearch = (event: any) => {
     let seachValue = this.searchValue?.toLowerCase() ?? '';
     if (seachValue.length > 2) {
       this.loadingData = true;
-      if (!this.pokemonSuscription?.closed) {
-        this.pokemonSuscription?.unsubscribe();
-      }
-      this.pokemonSuscription =
-        this.pokemonservice.getPokemonByName(seachValue).subscribe(
-          data => {
-            if (data) {
-              this.pokemonList = [];
-              this.pokemonList.push(data);
-            }
-            this.loadingData = false;
-          });
+      this.subscriptions.push(this.pokemonservice.getPokemonByName(seachValue).subscribe(
+        data => {
+          this.pokemonList = [];
+          if (data) {
+            this.pokemonList.push(data);
+            this.pagingResource = { page_number: PokemonComponent.INITIAL_PAGE, page_size: PokemonComponent.PAGE_SIZE, count_rows: this.pokemonList.length };
+          } else {
+            this.pagingResource = { page_number: 0, page_size: 0, count_rows: 0 };
+            this.unselectPokemon();
+          }
+
+          this.loadingData = false;
+        })
+      );
     }
   }
 
   searchAll() {
-    this.searchValue = '';
     this.loadingData = true;
-    this.pokemonGetAllSuscription =
-      this.pokemonservice.getPokemons(this.initialPage).subscribe(
-        data => {
-          this.pokemonList = data;
-          this.loadingData = false;
-        });
+    this.subscriptions.push(this.pokemonservice.getPokemons(this.pagingResource?.page_number, this.pagingResource?.page_size).subscribe(
+      data => {
+        this.pokemonList = data as Array<Pokemon>;
+        this.pagingResource.count_rows = data[0].count_rows;
+        this.unselectPokemon();
+
+        this.loadingData = false;
+      })
+    );
   }
 
-  onChangePage(pageNumber: number) {
-    this.unselectPokemon();
-
-    this.loadingData = true;
-    if (!this.pokemonGetAllSuscription?.closed) {
-      this.pokemonGetAllSuscription?.unsubscribe();
-    }
-
-    this.pokemonGetAllSuscription =
-      this.pokemonservice.getPokemons(pageNumber).subscribe(
-        data => {
-          this.pokemonList = data;
-          this.loadingData = false;
-        });
+  onChangePage(padingResource: PagingResource) {
+    this.pagingResource = padingResource;
+    this.searchAll();
   }
 
   selectPokemon = (pokemon: Pokemon) => {

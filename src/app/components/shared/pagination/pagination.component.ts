@@ -1,5 +1,6 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { Output, EventEmitter } from '@angular/core';
+import { PagingResource } from '../../../libs/entities/common/paging-resource';
 
 @Component({
   selector: 'app-pagination',
@@ -7,9 +8,10 @@ import { Output, EventEmitter } from '@angular/core';
   styleUrls: ['./pagination.component.css']
 })
 export class PaginationComponent implements OnInit {
-  @Input() initialPage: number = 1;
+  @Input() resource: PagingResource = { page_number: 0, page_size: 0, count_rows: 0 };
   @Input() disabled: boolean = false;
-  @Output() changePage = new EventEmitter<number>();
+
+  @Output() changePage = new EventEmitter<PagingResource>();
 
   constructor() { }
 
@@ -17,19 +19,27 @@ export class PaginationComponent implements OnInit {
   }
 
   changePageOutput() {
-    this.changePage.emit(this.initialPage);
+    this.changePage.emit(this.resource);
   }
 
-  back(){
-    if (this.initialPage > 1) {
-      this.initialPage--;
-      this.changePageOutput();
-    }
+  cantidadPaginas() {
+    const cantidadRegistros = this.resource.count_rows ?? 0;
+    const pageSize = this.resource.page_size ?? 0;
+    return (cantidadRegistros > 0) ? Math.round(cantidadRegistros / pageSize) : 0;
   }
 
-  next(){
-    if (this.initialPage > 0) {
-      this.initialPage++;
+  back() {
+    this.resource.page_number = this.resource.page_number ?? 0;
+      if (this.resource.page_number > 1) {
+        this.resource.page_number--;
+        this.changePageOutput();
+      }
+  }
+
+  next() {
+    this.resource.page_number = this.resource.page_number ?? 0;
+    if (this.resource.page_number > 0) {
+      this.resource.page_number++;
       this.changePageOutput();
     }
   }

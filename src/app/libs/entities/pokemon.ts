@@ -1,7 +1,7 @@
 import { NamedApiResource } from "./common/named-api-resource";
 import { PagingResource } from "./common/paging-resource";
 
-export interface Pokemon extends NamedApiResource, PagingResource {
+export interface Pokemon extends NamedApiResource {
     base_experience: number;
     height: number;
     id: number;
@@ -13,6 +13,9 @@ export interface Pokemon extends NamedApiResource, PagingResource {
     sprites?: Sprites;
     types: PokemonType[];
     weight: number;
+}
+
+export interface PokemonPaginable extends Pokemon, PagingResource {
 }
 
 export interface Move {
