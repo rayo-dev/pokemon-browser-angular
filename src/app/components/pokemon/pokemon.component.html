@@ -1,66 +1,119 @@
-<h2 class="justify-content-center">Listado de Pokemon</h2>
+<main class="pokemon-page">
+  <header class="page-heading">
+    <p class="eyebrow">Explora la colección</p>
+    <h1>Encuentra tu Pokémon</h1>
+    <p class="page-intro">Explora especies, descubre sus tipos y consulta sus datos.</p>
+  </header>
 
-<div class="row">
-  <div class="input-icon-wrap f-col-6 white">
-    <span class="input-icon"><span class="fa fa-search"></span></span>
-    <input type="text" class="input-with-icon" name="search" placeholder="Buscar" [(ngModel)]="searchValue"
-      (keyup)="onKeyUpSearch($event)">
-    <span class="input-icon"><span class="fa fa-close" (click)="searchAll()"></span></span>
-  </div>
-</div>
-
-
-<div class="row justify-content-center" *ngIf="loadingData">
-  <img src="assets/Spin-1s-200px.gif" width="100" height="100" />
-</div>
-
-
-<div *ngIf="pokemonList && !loadingData">
-  <div class="flex">
-    <div class="f-col-9" *ngIf="pokemonList.length > 0">
-      <div class="row">
-        <div *ngFor="let item of pokemonList;" class="card f-col-2" (click)="selectPokemon(item)">
-          <img class="center" [src]="item.sprites?.front_default" width="120" height="120">
-          <div># {{item.id}}</div>
-          <div>{{item.name | titlecase }}</div>
-        </div>
-      </div>
-    </div>
-
-    <div class="f-col-3" *ngIf="pokemonSelected">
-      <div class="card card-selected">
-        <a href="#" class="close" (click)="unselectPokemon()"></a>
-        <div class="center">
-          <img [src]="pokemonSelected.sprites?.front_default" width="200" height="200">
-        </div>
-        <h4 class="center"># {{pokemonSelected.id}}</h4>
-        <h4 class="center">{{pokemonSelected.name | titlecase }}</h4>
-
-        <h4>Types</h4>
-        <div>{{ getTypes(pokemonSelected.types) }}</div>
-
-        <h4>Peso</h4>
-        <div>{{pokemonSelected.weight}}kg</div>
-
-        <h4>Sprites</h4>
-        <div class="row" *ngIf="pokemonSelected.sprites; let sprite;">
-          <img *ngIf="sprite.back_default" class="f-col center" [src]="sprite.back_default" width="40" height="40">
-          <img *ngIf="sprite.back_female" class="f-col center" [src]="sprite.back_female" width="40" height="40">
-          <img *ngIf="sprite.back_shiny" class="f-col center" [src]="sprite.back_shiny" width="40" height="40">
-          <img *ngIf="sprite.back_shiny_female" class="f-col center" [src]="sprite.back_shiny_female" width="40" height="40">
-          <img *ngIf="sprite.front_default" class="f-col center" [src]="sprite.front_default" width="40" height="40">
-          <img *ngIf="sprite.front_female" class="f-col center" [src]="sprite.front_female" width="40" height="40">
-          <img *ngIf="sprite.front_shiny" class="f-col center" [src]="sprite.front_shiny" width="40" height="40">
-          <img *ngIf="sprite.front_shiny_female" class="f-col center" [src]="sprite.front_shiny_female" width="40" height="40">
-        </div>
-
-        <h4>Movimientos</h4>
-        <div>{{ getMoves(pokemonSelected.moves) }}</div>
-      </div>
-    </div>
+  <div class="search-toolbar">
+    <label class="search-field">
+      <span class="search-icon" aria-hidden="true">⌕</span>
+      <input type="search" name="search" placeholder="Buscar por nombre…"
+        [(ngModel)]="searchValue" (input)="onSearchInput()"
+        aria-label="Buscar Pokémon" aria-describedby="search-help" autocomplete="off">
+      <button *ngIf="searchValue" type="button" class="clear-search"
+        (click)="clearSearch()" aria-label="Limpiar búsqueda">×</button>
+    </label>
+    <span class="species-count" *ngIf="pagingResource.count_rows as count">
+      {{ count | number }} especies
+    </span>
   </div>
 
-  <app-pagination [resource]="pagingResource" [disabled]="loadingData"
-    (changePage)="onChangePage($event)">
-  </app-pagination>
-</div>
+  <p id="search-help" class="search-help" *ngIf="searchTooShort" role="status">
+    Escribe al menos {{ minSearchLength }} caracteres para buscar.
+  </p>
+
+  <div class="state-message loading-state" *ngIf="loadingData" role="status" aria-live="polite">
+    <img src="assets/Spin-1s-200px.gif" width="36" height="36" alt="">
+    <span>Cargando Pokémon…</span>
+  </div>
+
+  <div class="state-message error-state" *ngIf="!loadingData && loadError" role="alert">
+    <span>No se pudo cargar la lista. Comprueba tu conexión e inténtalo de nuevo.</span>
+    <button type="button" class="retry-button" (click)="searchAll()">Reintentar</button>
+  </div>
+
+  <div class="state-message empty-state" *ngIf="!loadingData && emptyResult" role="status">
+    No se encontraron Pokémon para esta búsqueda.
+  </div>
+
+  <div class="explorer-layout" *ngIf="pokemonList.length > 0 && !loadingData">
+    <section class="results-section" aria-label="Resultados de Pokémon">
+      <div class="results-heading">
+        <h2>Resultados</h2>
+        <span>Mostrando {{ pokemonList.length }}</span>
+      </div>
+
+      <div class="pokemon-grid">
+        <button type="button" *ngFor="let item of pokemonList; trackBy: trackByPokemonId"
+          class="pokemon-card" (click)="selectPokemon(item)"
+          [attr.aria-pressed]="pokemonSelected?.id === item.id"
+          [attr.aria-label]="'Ver detalles de ' + item.name">
+          <span class="pokemon-art">
+            <img *ngIf="item.sprites?.front_default as imageUrl" [src]="imageUrl"
+              width="112" height="112" [alt]="item.name">
+            <span *ngIf="!item.sprites?.front_default" aria-hidden="true">◉</span>
+          </span>
+          <span class="pokemon-number">#{{ item.id | number:'3.0' }}</span>
+          <span class="pokemon-name">{{ item.name | titlecase }}</span>
+          <span class="type-list" aria-label="Tipos">
+            <span class="type-chip" *ngFor="let pokemonType of item.types">
+              {{ pokemonType.type.name | titlecase }}
+            </span>
+          </span>
+        </button>
+      </div>
+
+      <app-pagination *ngIf="!searchValue.trim()" [resource]="pagingResource" [disabled]="loadingData"
+        (changePage)="onChangePage($event)">
+      </app-pagination>
+    </section>
+
+    <aside class="detail-panel" *ngIf="pokemonSelected" aria-label="Detalle del Pokémon seleccionado" aria-live="polite">
+      <div class="detail-heading">
+        <span>DETALLE</span>
+        <button type="button" class="close-detail" (click)="unselectPokemon()" aria-label="Cerrar detalle">×</button>
+      </div>
+      <div class="detail-art">
+        <img *ngIf="pokemonSelected.sprites?.front_default as imageUrl" [src]="imageUrl"
+          width="150" height="150" [alt]="pokemonSelected.name">
+        <span *ngIf="!pokemonSelected.sprites?.front_default" aria-hidden="true">◉</span>
+      </div>
+      <p class="detail-number">#{{ pokemonSelected.id | number:'3.0' }}</p>
+      <h2>{{ pokemonSelected.name | titlecase }}</h2>
+      <div class="detail-types">
+        <span class="type-chip" *ngFor="let pokemonType of pokemonSelected.types">
+          {{ pokemonType.type.name | titlecase }}
+        </span>
+        <span class="detail-empty" *ngIf="!pokemonSelected.types.length">Sin tipos</span>
+      </div>
+
+      <dl class="pokemon-facts">
+        <div><dt>Altura</dt><dd>{{ pokemonSelected.height / 10 | number:'1.1-1' }} m</dd></div>
+        <div><dt>Peso</dt><dd>{{ pokemonSelected.weight / 10 | number:'1.1-1' }} kg</dd></div>
+      </dl>
+
+      <details class="additional-details">
+        <summary>Sprites alternativos</summary>
+        <div class="sprite-list" *ngIf="pokemonSelected.sprites as sprite">
+          <img *ngIf="sprite.back_default as image" [src]="image" alt="Vista trasera">
+          <img *ngIf="sprite.back_female as image" [src]="image" alt="Vista trasera hembra">
+          <img *ngIf="sprite.back_shiny as image" [src]="image" alt="Vista trasera variocolor">
+          <img *ngIf="sprite.back_shiny_female as image" [src]="image" alt="Vista trasera variocolor hembra">
+          <img *ngIf="sprite.front_female as image" [src]="image" alt="Vista frontal hembra">
+          <img *ngIf="sprite.front_shiny as image" [src]="image" alt="Vista frontal variocolor">
+          <img *ngIf="sprite.front_shiny_female as image" [src]="image" alt="Vista frontal variocolor hembra">
+        </div>
+        <p class="detail-empty" *ngIf="!pokemonSelected.sprites">No hay sprites alternativos.</p>
+      </details>
+
+      <details class="additional-details moves-details">
+        <summary>Movimientos ({{ pokemonSelected.moves.length }})</summary>
+        <ul>
+          <li *ngFor="let move of pokemonSelected.moves | slice:0:8">{{ move.move.name | titlecase }}</li>
+        </ul>
+        <p class="detail-empty" *ngIf="pokemonSelected.moves.length > 8">Y {{ pokemonSelected.moves.length - 8 }} más.</p>
+      </details>
+    </aside>
+  </div>
+</main>

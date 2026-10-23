@@ -1,7 +1,6 @@
-import { NamedApiResource } from "./common/named-api-resource";
-import { PagingResource } from "./common/paging-resource";
+import { NamedApiResource } from './common/named-api-resource';
 
-export interface Pokemon extends NamedApiResource {
+export interface Pokemon {
     base_experience: number;
     height: number;
     id: number;
@@ -9,13 +8,10 @@ export interface Pokemon extends NamedApiResource {
     moves: Move[];
     name: string;
     order: number;
-    past_types: any[];
-    sprites?: Sprites;
+    past_types: unknown[];
+    sprites: Sprites | null;
     types: PokemonType[];
     weight: number;
-}
-
-export interface PokemonPaginable extends Pokemon, PagingResource {
 }
 
 export interface Move {
@@ -23,14 +19,14 @@ export interface Move {
 }
 
 export interface Sprites {
-    back_default: string;
-    back_female: string;
-    back_shiny: string;
-    back_shiny_female: string;
-    front_default: string;
-    front_female: string;
-    front_shiny: string;
-    front_shiny_female: string;
+    back_default: string | null;
+    back_female: string | null;
+    back_shiny: string | null;
+    back_shiny_female: string | null;
+    front_default: string | null;
+    front_female: string | null;
+    front_shiny: string | null;
+    front_shiny_female: string | null;
 }
 
 export interface PokemonType {

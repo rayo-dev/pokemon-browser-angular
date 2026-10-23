@@ -1,19 +1,18 @@
-<div class="flex justify-content-between">
-    <div class="input-icon-wrap blue">
-        <button [disabled]="disabled || cantidadPaginas() == 0" type="button" class="input-with-icon" (click)="back()">
-          <span class="input-icon"><span class="fa fa-solid fa-angle-left"></span></span>
-          Atras
-        </button>
-    </div>
+<nav class="pagination" aria-label="Paginación del listado de Pokémon">
+  <button class="page-button" [disabled]="!canGoBack" type="button" (click)="back()"
+    aria-label="Página anterior">
+    <span aria-hidden="true">←</span>
+    <span class="button-label">Anterior</span>
+  </button>
 
-    <div class="center">
-      <label>Total de Registros: {{ resource.count_rows }}, Total de paginas: {{ cantidadPaginas() }}, Pagina actual: {{ resource.page_number }}</label>
-    </div>
+  <span class="page-status" aria-live="polite">
+    Página <strong>{{ currentPage }}</strong> de <strong>{{ totalPages }}</strong>
+    <span class="record-count">· {{ (resource.count_rows ?? 0) | number }} Pokémon</span>
+  </span>
 
-    <div class="input-icon-wrap blue">
-        <button [disabled]="disabled || cantidadPaginas() == 0" type="button" (click)="next()">
-          Siguiente
-          <span class="input-icon"><span class="fa fa-solid fa-angle-right"></span></span>
-        </button>
-    </div>
-</div>
+  <button class="page-button" [disabled]="!canGoNext" type="button" (click)="next()"
+    aria-label="Página siguiente">
+    <span class="button-label">Siguiente</span>
+    <span aria-hidden="true">→</span>
+  </button>
+</nav>
